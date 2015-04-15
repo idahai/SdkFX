@@ -6,6 +6,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
+
 import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.content.Context;
@@ -36,13 +43,14 @@ public class FileDownLoadThread extends Thread {
 		boolean downloadOk = true;
 		try {
 			DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
-			String fileName = downloadUrl.substring(downloadUrl.lastIndexOf("/") + 1, downloadUrl.length());
-			Uri resource = Uri.parse(encodeGB(downloadUrl));
+			String location = getLocationMethod(downloadUrl);
+			String fileName = location.substring(location.lastIndexOf("/") + 1, location.length());
+			Uri resource = Uri.parse(encodeGB(location));
 			DownloadManager.Request request = new DownloadManager.Request(resource);
 			request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE|DownloadManager.Request.NETWORK_WIFI);
 			request.setAllowedOverRoaming(false);
 			MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-			String mimeString = mimeTypeMap.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(downloadUrl));
+			String mimeString = mimeTypeMap.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(location));
 			request.setMimeType(mimeString);
 			request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
 			request.setVisibleInDownloadsUi(true);
@@ -71,7 +79,7 @@ public class FileDownLoadThread extends Thread {
 	}
 	
 	private boolean remoteFileExists(String address){
-		boolean bExists = false;//Ä¬ÈÏÎª²»´æÔÚ£¬Ôò²»½øÐÐÏÂÔØ²Ù×÷
+		boolean bExists = false;//Ä¬ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ò²»½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½
 		InputStream inputstream = null;
 		HttpURLConnection connection = null;
 		try {
@@ -87,5 +95,29 @@ public class FileDownLoadThread extends Thread {
 		} catch (Exception e) {
 		}
 		return bExists;
+	}
+	
+	private String getLocationMethod(String reqUrl) {
+		DefaultHttpClient httpclient = new DefaultHttpClient();
+		String location = null;
+		int responseCode = 0;
+		try {
+			final HttpGet request = new HttpGet(reqUrl);
+			HttpParams params = new BasicHttpParams();
+			params.setParameter("http.protocol.handle-redirects", false);
+			request.setParams(params);
+			HttpResponse response = httpclient.execute(request);
+			responseCode = response.getStatusLine().getStatusCode();
+			//Header[] headers = response.getAllHeaders();
+			if (responseCode == 302) {
+				Header locationHeader = response.getFirstHeader("Location");
+				if (locationHeader != null) {
+					location = locationHeader.getValue();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return location;
 	}
 }
