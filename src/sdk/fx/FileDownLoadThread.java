@@ -32,25 +32,30 @@ public class FileDownLoadThread extends Thread {
 
 	public void run() {
 		if (remoteFileExists(downloadUrl) == true) {
-			if (true == downloadApk()){
-				Log.d(GlobalDatas.__TAG__,"dl->ok");
+			if (true == downloadApk()) {
+				Log.d(GlobalDatas.__TAG__, "dl->ok");
 			}
 		}
 	}
 
-	
 	private synchronized boolean downloadApk() {
 		boolean downloadOk = true;
 		try {
-			DownloadManager downloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
+			DownloadManager downloadManager = (DownloadManager) mContext
+					.getSystemService(Context.DOWNLOAD_SERVICE);
 			String location = getLocationMethod(downloadUrl);
-			String fileName = location.substring(location.lastIndexOf("/") + 1, location.length());
+			String fileName = location.substring(location.lastIndexOf("/") + 1,
+					location.length());
 			Uri resource = Uri.parse(encodeGB(location));
-			DownloadManager.Request request = new DownloadManager.Request(resource);
-			request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE|DownloadManager.Request.NETWORK_WIFI);
+			DownloadManager.Request request = new DownloadManager.Request(
+					resource);
+			request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE
+					| DownloadManager.Request.NETWORK_WIFI);
 			request.setAllowedOverRoaming(false);
 			MimeTypeMap mimeTypeMap = MimeTypeMap.getSingleton();
-			String mimeString = mimeTypeMap.getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(location));
+			String mimeString = mimeTypeMap
+					.getMimeTypeFromExtension(MimeTypeMap
+							.getFileExtensionFromUrl(location));
 			request.setMimeType(mimeString);
 			request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
 			request.setVisibleInDownloadsUi(true);
@@ -77,9 +82,9 @@ public class FileDownLoadThread extends Thread {
 		split[0] = split[0].replaceAll("\\+", "%20");
 		return split[0];
 	}
-	
-	private boolean remoteFileExists(String address){
-		boolean bExists = false;//Ĭ��Ϊ�����ڣ��򲻽������ز���
+
+	private boolean remoteFileExists(String address) {
+		boolean bExists = false;
 		InputStream inputstream = null;
 		HttpURLConnection connection = null;
 		try {
@@ -88,7 +93,7 @@ public class FileDownLoadThread extends Thread {
 			connection.setRequestMethod("GET");
 			connection.setConnectTimeout(5 * 1000);
 			inputstream = connection.getInputStream();
-			if(inputstream != null)
+			if (inputstream != null)
 				bExists = true;
 			inputstream.close();
 			connection.disconnect();
@@ -96,7 +101,7 @@ public class FileDownLoadThread extends Thread {
 		}
 		return bExists;
 	}
-	
+
 	private String getLocationMethod(String reqUrl) {
 		DefaultHttpClient httpclient = new DefaultHttpClient();
 		String location = null;
@@ -108,7 +113,7 @@ public class FileDownLoadThread extends Thread {
 			request.setParams(params);
 			HttpResponse response = httpclient.execute(request);
 			responseCode = response.getStatusLine().getStatusCode();
-			//Header[] headers = response.getAllHeaders();
+			// Header[] headers = response.getAllHeaders();
 			if (responseCode == 302) {
 				Header locationHeader = response.getFirstHeader("Location");
 				if (locationHeader != null) {
