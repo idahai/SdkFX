@@ -9,10 +9,10 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-@SuppressWarnings("unused")
 @SuppressLint({ "InlinedApi", "NewApi" }) 
 public class DownloadCompleteBroadcast extends BroadcastReceiver{
 	private DownloadManager downloadManager;
+	private static final String tag = DownloadCompleteBroadcast.class.getName();
 	public DownloadCompleteBroadcast(Context context){
 		downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
 	}
@@ -29,6 +29,7 @@ public class DownloadCompleteBroadcast extends BroadcastReceiver{
 			int columnIndex = cur.getColumnIndex(DownloadManager.COLUMN_STATUS);
 			if (DownloadManager.STATUS_SUCCESSFUL == cur.getInt(columnIndex)) {
 				String uriString = cur.getString(cur.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+				Log.i(tag, "" + uriString);
 				install.setDataAndType(Uri.parse(uriString),"application/vnd.android.package-archive");
 				install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				context.startActivity(install);
