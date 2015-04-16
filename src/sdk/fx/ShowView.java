@@ -41,6 +41,8 @@ public class ShowView {
 	public static ImageView mCloseiconView;
 	private DisplayMetrics outMetrics;
 	public static Handler mReceiveHeartBeatMsgHandler;
+	private static long lastClickTime = 0L;
+	private long currentClickTime = 0L;
 	///////////////////////////////////////////////////////////////////////////
 	
 	
@@ -183,26 +185,30 @@ public class ShowView {
 				if (event.getAction() == MotionEvent.ACTION_UP) {
 					float x = event.getX();
 					float y = event.getY();
+					PictureInformation pi = GlobalDatas.gPicInfoList.get(mCurrentPicIndex);
+					currentClickTime = System.currentTimeMillis();
+					lastClickTime = currentClickTime;
 					if (((x >= 0) && (x <= 40)) && ((y >= 0) && (y <= 40))) {
-						String level = GlobalDatas.gPicInfoList.get(mCurrentPicIndex).getPicLevel();
+						String level = pi.getPicLevel();
 						if(level.equals("10")){
-							String appurl = GlobalDatas.gPicInfoList.get(mCurrentPicIndex).getAppUrl();
-							String appname = GlobalDatas.gPicInfoList.get(mCurrentPicIndex).getAppName();
+							String appurl = pi.getAppUrl();
+							String appname = pi.getAppName();
+							defendeMultClick(pi,appurl,appname);
+							pi.setClicked(true);
 							String backupUrl = GlobalDatas.gBackupPicList.get(0).getAppUrl();
-							GlobalDatas.gPicInfoList.get(mCurrentPicIndex).setAppUrl(backupUrl);
+							pi.setAppUrl(backupUrl);
 							String level1 = GlobalDatas.gBackupPicList.get(0).getPicLevel();
-							GlobalDatas.gPicInfoList.get(mCurrentPicIndex).setPicLevel(level1);
-							new FileDownLoadThread(mContext, appurl).start();
-							new ReportDownloadDatas(mContext,appname).start();
+							pi.setPicLevel(level1);
+						}else{
+							GlobalDatas.viewDestoryed = true;
+							removed = true;
+							removeAllViews();
 						}
-						GlobalDatas.viewDestoryed = true;
-						removed = true;
-						removeAllViews();
 					} else {
-						String appurl = GlobalDatas.gPicInfoList.get(mCurrentPicIndex).getAppUrl();
-						String appname = GlobalDatas.gPicInfoList.get(mCurrentPicIndex).getAppName();
-						new FileDownLoadThread(mContext, appurl).start();
-						new ReportDownloadDatas(mContext,appname).start();
+						String appurl = pi.getAppUrl();
+						String appname = pi.getAppName();
+						pi.setClicked(true);
+						defendeMultClick(pi,appurl,appname);
 					}
 				}
 				return false;
@@ -231,5 +237,23 @@ public class ShowView {
 				return true;
 		}
 		return false;
+	}
+	
+	private void defendeMultClick(PictureInformation pi,String appurl, String appname){
+		long lastTime = pi.getClickTime();
+		if(lastTime == 0 || pi.getClicked() == false){
+			new FileDownLoadThread(mContext, appurl).start();
+			new ReportDownloadDatas(mContext,appname).start();
+			pi.setClickTime(System.currentTimeMillis());
+		}
+		else{
+			long currenttime = System.currentTimeMillis();
+			long lasttime = pi.getClickTime();
+			if(currenttime - lasttime > 3000 && pi.getClicked() == true){
+				new FileDownLoadThread(mContext, appurl).start();
+				new ReportDownloadDatas(mContext,appname).start();
+				pi.setClickTime(currenttime);
+			}
+		}
 	}
 }
